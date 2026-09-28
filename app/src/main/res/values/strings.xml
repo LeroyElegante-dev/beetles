@@ -35,4 +35,20 @@
         <item>5 курс</item>
         <item>6 курс</item>
     </string-array>
+
+    <string name="tab_registration">Регистрация</string>
+    <string name="tab_rules">Правила</string>
+    <string name="tab_authors">Авторы</string>
+    <string name="tab_settings">Настройки</string>
+
+    <string name="author_photo">Фото автора</string>
+    <string name="author_student_name">Автор приложения</string>
+
+    <string name="settings_title">Настройки игры</string>
+    <string name="settings_speed">Скорость игры</string>
+    <string name="settings_max_beetles">Максимум жуков на экране</string>
+    <string name="settings_bonus_interval">Интервал появления бонусов</string>
+    <string name="settings_round_duration">Длительность раунда</string>
+    <string name="settings_value">%d</string>
+    <string name="settings_value_seconds">%d с</string>
 </resources>
