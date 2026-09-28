@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="72dp"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/ivAuthorPhoto"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:contentDescription="@string/author_photo"
+        android:scaleType="centerCrop"
+        tools:src="@drawable/ic_author" />
+
+    <TextView
+        android:id="@+id/tvAuthorName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        tools:text="Иванов Иван" />
+</LinearLayout>
