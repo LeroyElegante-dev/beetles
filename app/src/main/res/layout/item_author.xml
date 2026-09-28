@@ -10,11 +10,11 @@
 
     <ImageView
         android:id="@+id/ivAuthorPhoto"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:contentDescription="@string/author_photo"
         android:scaleType="centerCrop"
-        tools:src="@drawable/ic_author" />
+        tools:src="@drawable/author_photo" />
 
     <TextView
         android:id="@+id/tvAuthorName"

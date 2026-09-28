@@ -28,7 +28,7 @@ class AuthorsFragment : Fragment() {
         val authors = listOf(
             Author(
                 name = getString(R.string.author_student_name),
-                photoRes = R.drawable.ic_author
+                photoRes = R.drawable.author_photo
             )
         )
         binding.lvAuthors.adapter = AuthorAdapter(authors)
