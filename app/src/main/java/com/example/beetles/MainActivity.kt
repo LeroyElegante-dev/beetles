@@ -22,4 +22,8 @@ class MainActivity : AppCompatActivity() {
             tab.setText(MainPagerAdapter.TAB_TITLES[position])
         }.attach()
     }
+
+    fun openTab(position: Int) {
+        binding.viewPager.currentItem = position
+    }
 }

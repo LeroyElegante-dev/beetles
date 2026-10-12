@@ -37,9 +37,20 @@
     </string-array>
 
     <string name="tab_registration">Регистрация</string>
+    <string name="tab_game">Игра</string>
     <string name="tab_rules">Правила</string>
     <string name="tab_authors">Авторы</string>
     <string name="tab_settings">Настройки</string>
+
+    <string name="game_score">Очки: %d</string>
+    <string name="game_time">Время: %d с</string>
+    <string name="game_hits">Попадания: %d</string>
+    <string name="game_misses">Промахи: %d</string>
+    <string name="game_accuracy">Точность: %d%%</string>
+    <string name="game_menu">Меню</string>
+    <string name="game_start">Играть</string>
+    <string name="game_again">Ещё раз</string>
+    <string name="game_over">Раунд окончен. Очки: %1$d, точность: %2$d%%</string>
 
     <string name="author_photo">Фото автора</string>
     <string name="author_student_name">Иванов Илья</string>
