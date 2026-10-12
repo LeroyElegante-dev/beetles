@@ -8,6 +8,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.beetles.R
+import com.example.beetles.data.GameSettingsStore
 import com.example.beetles.databinding.FragmentSettingsBinding
 import com.example.beetles.model.GameSettings
 
@@ -15,6 +16,7 @@ class SettingsFragment : Fragment() {
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
+    private lateinit var store: GameSettingsStore
     private lateinit var settings: GameSettings
 
     override fun onCreateView(
@@ -28,6 +30,10 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        store = GameSettingsStore(requireContext())
+        settings = store.load()
+        applySettingsToSeekBars(settings)
+
         bindSeekBar(binding.sbSpeed, binding.tvSpeedValue) {
             getString(R.string.settings_value, progress + 1)
         }
@@ -41,12 +47,18 @@ class SettingsFragment : Fragment() {
             getString(R.string.settings_value_seconds, progress + 30)
         }
         refreshLabels()
-        settings = currentSettings()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun applySettingsToSeekBars(settings: GameSettings) {
+        binding.sbSpeed.progress = settings.speed - 1
+        binding.sbMaxBeetles.progress = settings.maxBeetles - 1
+        binding.sbBonusInterval.progress = settings.bonusIntervalSeconds - 5
+        binding.sbRoundDuration.progress = settings.roundDurationSeconds - 30
     }
 
     private fun currentSettings(): GameSettings = GameSettings(
@@ -78,7 +90,10 @@ class SettingsFragment : Fragment() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 valueView.text = seekBar?.format()
-                settings = currentSettings()
+                if (fromUser) {
+                    settings = currentSettings()
+                    store.save(settings)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
