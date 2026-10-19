@@ -11,7 +11,17 @@
     <string name="birth_date_label">Дата рождения</string>
     <string name="zodiac_image">Знак зодиака</string>
     <string name="register">Зарегистрировать</string>
+    <string name="select_saved_player">Выбрать игрока</string>
+    <string name="saved_players_label">Ранее созданные игроки</string>
+    <string name="current_player">Текущий игрок: %s</string>
+    <string name="current_player_none">Текущий игрок: не выбран</string>
+    <string name="no_saved_players">Нет сохранённых игроков</string>
+    <string name="player_saved">Игрок сохранён и выбран</string>
+    <string name="player_selected">Игрок выбран</string>
     <string name="error_empty_name">Введите ФИО</string>
+    <string name="error_no_player">Сначала зарегистрируйте или выберите игрока</string>
+    <string name="error_select_player">Выберите игрока из списка</string>
+    <string name="score_saved">Результат сохранён в рекорды</string>
     <string name="player_summary">ФИО: %1$s\nПол: %2$s\nКурс: %3$d\nСложность: %4$d\nДата рождения: %5$s\nЗнак зодиака: %6$s</string>
 
     <string name="zodiac_aries">Овен</string>
@@ -38,6 +48,7 @@
 
     <string name="tab_registration">Регистрация</string>
     <string name="tab_game">Игра</string>
+    <string name="tab_records">Рекорды</string>
     <string name="tab_rules">Правила</string>
     <string name="tab_authors">Авторы</string>
     <string name="tab_settings">Настройки</string>
@@ -62,4 +73,8 @@
     <string name="settings_round_duration">Длительность раунда</string>
     <string name="settings_value">%d</string>
     <string name="settings_value_seconds">%d с</string>
+
+    <string name="records_empty">Пока нет сохранённых результатов</string>
+    <string name="record_line">Очки: %1$d  ·  Сложность: %2$d  ·  Точность: %3$d%%</string>
+    <string name="record_details">Попадания: %1$d  ·  Промахи: %2$d  ·  %3$s</string>
 </resources>
