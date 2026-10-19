@@ -1,6 +1,7 @@
 package com.example.beetles.model
 
 data class Player(
+    val id: Long = 0,
     val fullName: String,
     val gender: Gender,
     val course: Int,
