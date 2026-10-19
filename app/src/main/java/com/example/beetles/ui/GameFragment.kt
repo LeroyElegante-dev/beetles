@@ -8,11 +8,16 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.beetles.MainActivity
 import com.example.beetles.MainPagerAdapter
 import com.example.beetles.R
+import com.example.beetles.data.CurrentPlayerStore
 import com.example.beetles.data.GameSettingsStore
 import com.example.beetles.databinding.FragmentGameBinding
+import com.example.beetles.db.BeetlesDatabase
+import com.example.beetles.db.ScoreEntity
+import kotlinx.coroutines.launch
 
 class GameFragment : Fragment() {
 
@@ -20,6 +25,7 @@ class GameFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var settingsStore: GameSettingsStore
+    private lateinit var currentPlayerStore: CurrentPlayerStore
     private var roundTimer: CountDownTimer? = null
     private var score = 0
     private var hits = 0
@@ -38,7 +44,9 @@ class GameFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         settingsStore = GameSettingsStore(requireContext())
+        currentPlayerStore = CurrentPlayerStore(requireContext())
         refreshHud()
+        refreshCurrentPlayer()
 
         binding.gameField.onHit = { points ->
             if (playing) {
@@ -59,6 +67,13 @@ class GameFragment : Fragment() {
         binding.btnMenu.setOnClickListener { showGameMenu(it) }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::currentPlayerStore.isInitialized) {
+            refreshCurrentPlayer()
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         if (playing) {
@@ -74,6 +89,11 @@ class GameFragment : Fragment() {
     }
 
     private fun startRound() {
+        if (!currentPlayerStore.hasPlayer()) {
+            Toast.makeText(requireContext(), R.string.error_no_player, Toast.LENGTH_SHORT).show()
+            (activity as? MainActivity)?.openTab(MainPagerAdapter.TAB_REGISTRATION)
+            return
+        }
         val settings = settingsStore.load()
         score = 0
         hits = 0
@@ -108,11 +128,54 @@ class GameFragment : Fragment() {
         binding.btnStart.setText(R.string.game_again)
         refreshHud()
         if (showToast && isAdded) {
+            saveScore()
             Toast.makeText(
                 requireContext(),
                 getString(R.string.game_over, score, accuracyPercent()),
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    private fun saveScore() {
+        val playerId = currentPlayerStore.getPlayerId()
+        if (playerId == CurrentPlayerStore.NO_PLAYER) return
+        val accuracy = accuracyPercent()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val db = BeetlesDatabase.get(requireContext())
+            val player = db.playerDao().getById(playerId) ?: return@launch
+            db.scoreDao().insert(
+                ScoreEntity(
+                    playerId = player.id,
+                    playerName = player.fullName,
+                    score = score,
+                    difficulty = player.difficulty,
+                    hits = hits,
+                    misses = misses,
+                    accuracy = accuracy,
+                    createdAt = System.currentTimeMillis()
+                )
+            )
+            if (isAdded) {
+                Toast.makeText(requireContext(), R.string.score_saved, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun refreshCurrentPlayer() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val id = currentPlayerStore.getPlayerId()
+            val player = if (id == CurrentPlayerStore.NO_PLAYER) {
+                null
+            } else {
+                BeetlesDatabase.get(requireContext()).playerDao().getById(id)
+            }
+            val binding = _binding ?: return@launch
+            binding.tvCurrentPlayer.text = if (player == null) {
+                getString(R.string.current_player_none)
+            } else {
+                getString(R.string.current_player, player.fullName)
+            }
         }
     }
 
@@ -139,11 +202,15 @@ class GameFragment : Fragment() {
 
     private fun showGameMenu(anchor: View) {
         PopupMenu(requireContext(), anchor).apply {
-            menu.add(0, MENU_RULES, 0, R.string.tab_rules)
-            menu.add(0, MENU_AUTHORS, 1, R.string.tab_authors)
-            menu.add(0, MENU_SETTINGS, 2, R.string.tab_settings)
+            menu.add(0, MENU_PLAYERS, 0, R.string.tab_registration)
+            menu.add(0, MENU_RECORDS, 1, R.string.tab_records)
+            menu.add(0, MENU_RULES, 2, R.string.tab_rules)
+            menu.add(0, MENU_AUTHORS, 3, R.string.tab_authors)
+            menu.add(0, MENU_SETTINGS, 4, R.string.tab_settings)
             setOnMenuItemClickListener { item ->
                 val position = when (item.itemId) {
+                    MENU_PLAYERS -> MainPagerAdapter.TAB_REGISTRATION
+                    MENU_RECORDS -> MainPagerAdapter.TAB_RECORDS
                     MENU_RULES -> MainPagerAdapter.TAB_RULES
                     MENU_AUTHORS -> MainPagerAdapter.TAB_AUTHORS
                     MENU_SETTINGS -> MainPagerAdapter.TAB_SETTINGS
@@ -158,8 +225,10 @@ class GameFragment : Fragment() {
 
     private companion object {
         const val MISS_PENALTY = 5
-        const val MENU_RULES = 1
-        const val MENU_AUTHORS = 2
-        const val MENU_SETTINGS = 3
+        const val MENU_PLAYERS = 1
+        const val MENU_RECORDS = 2
+        const val MENU_RULES = 3
+        const val MENU_AUTHORS = 4
+        const val MENU_SETTINGS = 5
     }
 }
