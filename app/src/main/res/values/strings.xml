@@ -62,6 +62,7 @@
     <string name="game_start">Играть</string>
     <string name="game_again">Ещё раз</string>
     <string name="game_over">Раунд окончен. Очки: %1$d, точность: %2$d%%</string>
+    <string name="bonus_activated">Бонус! Наклоняйте телефон — жуки скатываются</string>
 
     <string name="author_photo">Фото автора</string>
     <string name="author_student_name">Иванов Илья</string>

@@ -62,6 +62,11 @@ class GameFragment : Fragment() {
                 refreshHud()
             }
         }
+        binding.gameField.onBonusCollected = {
+            if (playing && isAdded) {
+                Toast.makeText(requireContext(), R.string.bonus_activated, Toast.LENGTH_SHORT).show()
+            }
+        }
 
         binding.btnStart.setOnClickListener { startRound() }
         binding.btnMenu.setOnClickListener { showGameMenu(it) }
