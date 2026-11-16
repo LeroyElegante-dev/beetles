@@ -64,6 +64,14 @@
     <string name="game_over">Раунд окончен. Очки: %1$d, точность: %2$d%%</string>
     <string name="bonus_activated">Бонус! Наклоняйте телефон — жуки скатываются</string>
 
+    <string name="widget_gold_title">Золото ЦБ</string>
+    <string name="widget_gold_description">Курс золота Банка России</string>
+    <string name="widget_gold_subtitle">за 1 грамм</string>
+    <string name="widget_gold_loading">…</string>
+    <string name="widget_gold_rate_value">%.2f ₽</string>
+    <string name="widget_gold_date">%s</string>
+    <string name="widget_gold_refresh">Обновить</string>
+
     <string name="author_photo">Фото автора</string>
     <string name="author_student_name">Иванов Илья</string>
 
