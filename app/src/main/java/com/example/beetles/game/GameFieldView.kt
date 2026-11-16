@@ -42,6 +42,8 @@ class GameFieldView @JvmOverloads constructor(
     private var lastFrameNs = 0L
     private var timeSinceSpawn = 0f
     private var timeSinceBonus = 0f
+    private var timeSinceGolden = 0f
+    private var goldPoints = 80
     private var bonus: Bonus? = null
     private var tiltSecondsLeft = 0f
     private var gravityX = 0f
@@ -76,12 +78,14 @@ class GameFieldView @JvmOverloads constructor(
         }
     }
 
-    fun start(settings: GameSettings) {
+    fun start(settings: GameSettings, goldPoints: Int = 80) {
         this.settings = settings
+        this.goldPoints = goldPoints.coerceAtLeast(1)
         insects.clear()
         bonus = null
         timeSinceSpawn = 0f
         timeSinceBonus = 0f
+        timeSinceGolden = 0f
         tiltSecondsLeft = 0f
         gravityX = 0f
         gravityY = 0f
@@ -143,7 +147,8 @@ class GameFieldView @JvmOverloads constructor(
         val hit = insects.lastOrNull { it.contains(event.x, event.y) }
         if (hit != null) {
             insects.remove(hit)
-            onHit?.invoke(hit.kind.points)
+            val points = if (hit.kind == InsectKind.GOLDEN) goldPoints else hit.kind.points
+            onHit?.invoke(points)
             invalidate()
         } else {
             onMiss?.invoke()
@@ -202,6 +207,12 @@ class GameFieldView @JvmOverloads constructor(
                 timeSinceBonus = 0f
             }
         }
+
+        timeSinceGolden += dt
+        if (timeSinceGolden >= GOLDEN_INTERVAL_SECONDS && insects.size < settings.maxBeetles) {
+            spawnInsect(InsectKind.GOLDEN)
+            timeSinceGolden = 0f
+        }
     }
 
     private fun bounce(insect: Insect, stickToEdges: Boolean) {
@@ -223,8 +234,7 @@ class GameFieldView @JvmOverloads constructor(
         }
     }
 
-    private fun spawnInsect() {
-        val kind = InsectKind.random(random)
+    private fun spawnInsect(kind: InsectKind = InsectKind.random(random)) {
         val size = ((72 + random.nextInt(32)) * 3.5f * kind.sizeMultiplier)
             .coerceAtMost(minOf(width, height) * 0.8f)
         val maxX = (width - size).coerceAtLeast(1f)
@@ -290,5 +300,6 @@ class GameFieldView @JvmOverloads constructor(
         const val TILT_DURATION_SECONDS = 10f
         const val TILT_ACCEL = 220f
         const val TILT_DAMPING = 0.985f
+        const val GOLDEN_INTERVAL_SECONDS = 20f
     }
 }

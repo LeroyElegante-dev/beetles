@@ -14,9 +14,12 @@ import com.example.beetles.MainPagerAdapter
 import com.example.beetles.R
 import com.example.beetles.data.CurrentPlayerStore
 import com.example.beetles.data.GameSettingsStore
+import com.example.beetles.data.GoldRateRepository
+import com.example.beetles.data.GoldRateStore
 import com.example.beetles.databinding.FragmentGameBinding
 import com.example.beetles.db.BeetlesDatabase
 import com.example.beetles.db.ScoreEntity
+import com.example.beetles.widget.GoldRateWidgetProvider
 import kotlinx.coroutines.launch
 
 class GameFragment : Fragment() {
@@ -26,6 +29,8 @@ class GameFragment : Fragment() {
 
     private lateinit var settingsStore: GameSettingsStore
     private lateinit var currentPlayerStore: CurrentPlayerStore
+    private lateinit var goldRateStore: GoldRateStore
+    private lateinit var goldRateRepository: GoldRateRepository
     private var roundTimer: CountDownTimer? = null
     private var score = 0
     private var hits = 0
@@ -45,8 +50,11 @@ class GameFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         settingsStore = GameSettingsStore(requireContext())
         currentPlayerStore = CurrentPlayerStore(requireContext())
+        goldRateStore = GoldRateStore(requireContext())
+        goldRateRepository = GoldRateRepository(goldRateStore)
         refreshHud()
         refreshCurrentPlayer()
+        refreshGoldRate()
 
         binding.gameField.onHit = { points ->
             if (playing) {
@@ -106,7 +114,7 @@ class GameFragment : Fragment() {
         playing = true
         refreshHud()
         binding.btnStart.visibility = View.GONE
-        binding.gameField.start(settings)
+        binding.gameField.start(settings, goldRateStore.pointsForHit())
 
         roundTimer?.cancel()
         roundTimer = object : CountDownTimer(settings.roundDurationSeconds * 1000L, 1000L) {
@@ -180,6 +188,15 @@ class GameFragment : Fragment() {
                 getString(R.string.current_player_none)
             } else {
                 getString(R.string.current_player, player.fullName)
+            }
+        }
+    }
+
+    private fun refreshGoldRate() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            goldRateRepository.refreshOrCached()
+            if (isAdded) {
+                GoldRateWidgetProvider.requestUpdate(requireContext())
             }
         }
     }
