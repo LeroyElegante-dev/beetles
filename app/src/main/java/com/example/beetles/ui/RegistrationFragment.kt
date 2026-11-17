@@ -18,6 +18,7 @@ import com.example.beetles.model.Gender
 import com.example.beetles.model.Player
 import com.example.beetles.model.ZodiacSign
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import java.util.Calendar
 
 class RegistrationFragment : Fragment() {
@@ -25,7 +26,8 @@ class RegistrationFragment : Fragment() {
     private var _binding: FragmentRegistrationBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var currentPlayerStore: CurrentPlayerStore
+    private val currentPlayerStore: CurrentPlayerStore by inject()
+    private val database: BeetlesDatabase by inject()
     private var savedPlayers: List<PlayerEntity> = emptyList()
     private var selectedYear = 0
     private var selectedMonth = 0
@@ -42,7 +44,6 @@ class RegistrationFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        currentPlayerStore = CurrentPlayerStore(requireContext())
 
         val today = Calendar.getInstance()
         selectedYear = today.get(Calendar.YEAR)
@@ -85,8 +86,7 @@ class RegistrationFragment : Fragment() {
 
     private fun loadSavedPlayers() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val db = BeetlesDatabase.get(requireContext())
-            savedPlayers = db.playerDao().getAll()
+            savedPlayers = database.playerDao().getAll()
             val binding = _binding ?: return@launch
             val names = if (savedPlayers.isEmpty()) {
                 listOf(getString(R.string.no_saved_players))
@@ -145,8 +145,7 @@ class RegistrationFragment : Fragment() {
         )
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val db = BeetlesDatabase.get(requireContext())
-            val id = db.playerDao().insert(PlayerEntity.from(player))
+            val id = database.playerDao().insert(PlayerEntity.from(player))
             currentPlayerStore.setPlayerId(id)
             val saved = player.copy(id = id)
             val binding = _binding ?: return@launch

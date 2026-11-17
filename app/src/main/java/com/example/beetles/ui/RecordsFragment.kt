@@ -9,11 +9,13 @@ import androidx.lifecycle.lifecycleScope
 import com.example.beetles.databinding.FragmentRecordsBinding
 import com.example.beetles.db.BeetlesDatabase
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 class RecordsFragment : Fragment() {
 
     private var _binding: FragmentRecordsBinding? = null
     private val binding get() = _binding!!
+    private val database: BeetlesDatabase by inject()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,7 +38,7 @@ class RecordsFragment : Fragment() {
 
     private fun loadRecords() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val records = BeetlesDatabase.get(requireContext()).scoreDao().getAllOrdered()
+            val records = database.scoreDao().getAllOrdered()
             val binding = _binding ?: return@launch
             if (records.isEmpty()) {
                 binding.lvRecords.visibility = View.GONE

@@ -11,12 +11,13 @@ import com.example.beetles.R
 import com.example.beetles.data.GameSettingsStore
 import com.example.beetles.databinding.FragmentSettingsBinding
 import com.example.beetles.model.GameSettings
+import org.koin.android.ext.android.inject
 
 class SettingsFragment : Fragment() {
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
-    private lateinit var store: GameSettingsStore
+    private val store: GameSettingsStore by inject()
     private lateinit var settings: GameSettings
 
     override fun onCreateView(
@@ -30,7 +31,6 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        store = GameSettingsStore(requireContext())
         settings = store.load()
         applySettingsToSeekBars(settings)
 
