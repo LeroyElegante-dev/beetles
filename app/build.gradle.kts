@@ -60,6 +60,7 @@ dependencies {
         exclude(group = "stax", module = "stax")
     }
     implementation(libs.squareup.okhttp)
+    implementation(libs.koin.android)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

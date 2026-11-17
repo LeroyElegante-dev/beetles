@@ -16,6 +16,7 @@ viewpager2 = "1.1.0"
 room = "2.7.2"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
+koin = "4.2.2"
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -42,6 +43,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 squareup-retrofit-converter-simplexml = { group = "com.squareup.retrofit2", name = "converter-simplexml", version.ref = "retrofit" }
 squareup-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
