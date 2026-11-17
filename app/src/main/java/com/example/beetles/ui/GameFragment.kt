@@ -1,41 +1,29 @@
 package com.example.beetles.ui
 
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.beetles.MainActivity
 import com.example.beetles.MainPagerAdapter
 import com.example.beetles.R
-import com.example.beetles.data.CurrentPlayerStore
-import com.example.beetles.data.GameSettingsStore
-import com.example.beetles.data.GoldRateRepository
-import com.example.beetles.data.GoldRateStore
 import com.example.beetles.databinding.FragmentGameBinding
-import com.example.beetles.db.BeetlesDatabase
-import com.example.beetles.db.ScoreEntity
 import com.example.beetles.widget.GoldRateWidgetProvider
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class GameFragment : Fragment() {
 
     private var _binding: FragmentGameBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var settingsStore: GameSettingsStore
-    private lateinit var currentPlayerStore: CurrentPlayerStore
-    private lateinit var goldRateStore: GoldRateStore
-    private lateinit var goldRateRepository: GoldRateRepository
-    private var roundTimer: CountDownTimer? = null
-    private var score = 0
-    private var hits = 0
-    private var misses = 0
-    private var playing = false
+    private val viewModel: GameViewModel by activityViewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,178 +36,127 @@ class GameFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        settingsStore = GameSettingsStore(requireContext())
-        currentPlayerStore = CurrentPlayerStore(requireContext())
-        goldRateStore = GoldRateStore(requireContext())
-        goldRateRepository = GoldRateRepository(goldRateStore)
-        refreshHud()
-        refreshCurrentPlayer()
-        refreshGoldRate()
 
-        binding.gameField.onHit = { points ->
-            if (playing) {
-                score += points
-                hits += 1
-                refreshHud()
-            }
-        }
-        binding.gameField.onMiss = {
-            if (playing) {
-                score = (score - MISS_PENALTY).coerceAtLeast(0)
-                misses += 1
-                refreshHud()
-            }
-        }
-        binding.gameField.onBonusCollected = {
-            if (playing && isAdded) {
-                Toast.makeText(requireContext(), R.string.bonus_activated, Toast.LENGTH_SHORT).show()
-            }
-        }
+        binding.gameField.onHit = { points -> viewModel.onHit(points) }
+        binding.gameField.onMiss = { viewModel.onMiss() }
+        binding.gameField.onBonusCollected = { viewModel.onBonusCollected() }
 
-        binding.btnStart.setOnClickListener { startRound() }
+        binding.btnStart.setOnClickListener {
+            viewModel.startRound()
+            val state = viewModel.state.value
+            if (state.playing) {
+                binding.gameField.start(state.settings, state.goldPoints)
+            }
+        }
         binding.btnMenu.setOnClickListener { showGameMenu(it) }
+
+        observeState()
+        observeEvents()
+        viewModel.refreshGoldRate()
+        restoreFieldIfPlaying()
     }
 
     override fun onResume() {
         super.onResume()
-        if (::currentPlayerStore.isInitialized) {
-            refreshCurrentPlayer()
+        viewModel.refreshCurrentPlayer()
+        restoreFieldIfPlaying()
+        if (isAdded) {
+            GoldRateWidgetProvider.requestUpdate(requireContext())
         }
     }
 
     override fun onPause() {
+        // Stop drawing only. Score/timer live in ViewModel and survive rotation.
+        _binding?.gameField?.stop()
         super.onPause()
-        if (playing) {
-            endRound(showToast = false)
-        }
     }
 
     override fun onDestroyView() {
-        roundTimer?.cancel()
-        binding.gameField.stop()
+        _binding?.gameField?.stop()
         _binding = null
         super.onDestroyView()
     }
 
-    private fun startRound() {
-        if (!currentPlayerStore.hasPlayer()) {
-            Toast.makeText(requireContext(), R.string.error_no_player, Toast.LENGTH_SHORT).show()
-            (activity as? MainActivity)?.openTab(MainPagerAdapter.TAB_REGISTRATION)
-            return
-        }
-        val settings = settingsStore.load()
-        score = 0
-        hits = 0
-        misses = 0
-        playing = true
-        refreshHud()
-        binding.btnStart.visibility = View.GONE
-        binding.gameField.start(settings, goldRateStore.pointsForHit())
-
-        roundTimer?.cancel()
-        roundTimer = object : CountDownTimer(settings.roundDurationSeconds * 1000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                binding.tvTime.text = getString(
-                    R.string.game_time,
-                    (millisUntilFinished / 1000L).toInt()
-                )
-            }
-
-            override fun onFinish() {
-                endRound(showToast = true)
-            }
-        }.start()
-        binding.tvTime.text = getString(R.string.game_time, settings.roundDurationSeconds)
-    }
-
-    private fun endRound(showToast: Boolean) {
-        playing = false
-        roundTimer?.cancel()
-        roundTimer = null
-        binding.gameField.stop()
-        binding.btnStart.visibility = View.VISIBLE
-        binding.btnStart.setText(R.string.game_again)
-        refreshHud()
-        if (showToast && isAdded) {
-            saveScore()
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.game_over, score, accuracyPercent()),
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    private fun saveScore() {
-        val playerId = currentPlayerStore.getPlayerId()
-        if (playerId == CurrentPlayerStore.NO_PLAYER) return
-        val accuracy = accuracyPercent()
+    private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val db = BeetlesDatabase.get(requireContext())
-            val player = db.playerDao().getById(playerId) ?: return@launch
-            db.scoreDao().insert(
-                ScoreEntity(
-                    playerId = player.id,
-                    playerName = player.fullName,
-                    score = score,
-                    difficulty = player.difficulty,
-                    hits = hits,
-                    misses = misses,
-                    accuracy = accuracy,
-                    createdAt = System.currentTimeMillis()
-                )
-            )
-            if (isAdded) {
-                Toast.makeText(requireContext(), R.string.score_saved, Toast.LENGTH_SHORT).show()
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    val binding = _binding ?: return@collect
+                    binding.tvScore.text = getString(R.string.game_score, state.score)
+                    binding.tvHits.text = getString(R.string.game_hits, state.hits)
+                    binding.tvMisses.text = getString(R.string.game_misses, state.misses)
+                    binding.tvAccuracy.text = getString(R.string.game_accuracy, state.accuracyPercent)
+                    binding.tvTime.text = getString(R.string.game_time, state.secondsLeft)
+                    binding.tvCurrentPlayer.text = if (state.currentPlayerName.isNullOrBlank()) {
+                        getString(R.string.current_player_none)
+                    } else {
+                        getString(R.string.current_player, state.currentPlayerName)
+                    }
+                    if (state.playing) {
+                        binding.btnStart.visibility = View.GONE
+                    } else {
+                        binding.btnStart.visibility = View.VISIBLE
+                        binding.btnStart.setText(
+                            if (state.score > 0 || state.hits > 0 || state.misses > 0) {
+                                R.string.game_again
+                            } else {
+                                R.string.game_start
+                            }
+                        )
+                    }
+                }
             }
         }
     }
 
-    private fun refreshCurrentPlayer() {
+    private fun observeEvents() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val id = currentPlayerStore.getPlayerId()
-            val player = if (id == CurrentPlayerStore.NO_PLAYER) {
-                null
-            } else {
-                BeetlesDatabase.get(requireContext()).playerDao().getById(id)
-            }
-            val binding = _binding ?: return@launch
-            binding.tvCurrentPlayer.text = if (player == null) {
-                getString(R.string.current_player_none)
-            } else {
-                getString(R.string.current_player, player.fullName)
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        GameEvent.NeedPlayer -> {
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.error_no_player,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            (activity as? MainActivity)?.openTab(MainPagerAdapter.TAB_REGISTRATION)
+                        }
+                        GameEvent.BonusActivated -> {
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.bonus_activated,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        is GameEvent.RoundFinished -> {
+                            _binding?.gameField?.stop()
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.game_over, event.score, event.accuracy),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        GameEvent.ScoreSaved -> {
+                            Toast.makeText(
+                                requireContext(),
+                                R.string.score_saved,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
             }
         }
     }
 
-    private fun refreshGoldRate() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            goldRateRepository.refreshOrCached()
-            if (isAdded) {
-                GoldRateWidgetProvider.requestUpdate(requireContext())
-            }
+    private fun restoreFieldIfPlaying() {
+        val state = viewModel.state.value
+        val binding = _binding ?: return
+        if (state.playing) {
+            binding.gameField.start(state.settings, state.goldPoints)
+            binding.btnStart.visibility = View.GONE
         }
-    }
-
-    private fun refreshHud() {
-        binding.tvScore.text = getString(R.string.game_score, score)
-        binding.tvHits.text = getString(R.string.game_hits, hits)
-        binding.tvMisses.text = getString(R.string.game_misses, misses)
-        binding.tvAccuracy.text = getString(R.string.game_accuracy, accuracyPercent())
-        if (!playing) {
-            val duration = if (::settingsStore.isInitialized) {
-                settingsStore.load().roundDurationSeconds
-            } else {
-                0
-            }
-            binding.tvTime.text = getString(R.string.game_time, duration)
-        }
-    }
-
-    private fun accuracyPercent(): Int {
-        val shots = hits + misses
-        if (shots == 0) return 0
-        return hits * 100 / shots
     }
 
     private fun showGameMenu(anchor: View) {
@@ -246,7 +183,6 @@ class GameFragment : Fragment() {
     }
 
     private companion object {
-        const val MISS_PENALTY = 5
         const val MENU_PLAYERS = 1
         const val MENU_RECORDS = 2
         const val MENU_RULES = 3
