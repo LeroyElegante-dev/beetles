@@ -45,7 +45,7 @@ class GameFragment : Fragment() {
             viewModel.startRound()
             val state = viewModel.state.value
             if (state.playing) {
-                binding.gameField.start(state.settings, state.goldPoints)
+                binding.gameField.start(state.settings, state.goldPoints, state.beetleSkin)
             }
         }
         binding.btnMenu.setOnClickListener { showGameMenu(it) }
@@ -59,6 +59,7 @@ class GameFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         viewModel.refreshCurrentPlayer()
+        viewModel.refreshSkin()
         restoreFieldIfPlaying()
         if (isAdded) {
             GoldRateWidgetProvider.requestUpdate(requireContext())
@@ -94,6 +95,7 @@ class GameFragment : Fragment() {
                     }
                     if (state.playing) {
                         binding.btnStart.visibility = View.GONE
+                        binding.gameField.applySkin(state.beetleSkin)
                     } else {
                         binding.btnStart.visibility = View.VISIBLE
                         binding.btnStart.setText(
@@ -154,7 +156,7 @@ class GameFragment : Fragment() {
         val state = viewModel.state.value
         val binding = _binding ?: return
         if (state.playing) {
-            binding.gameField.start(state.settings, state.goldPoints)
+            binding.gameField.start(state.settings, state.goldPoints, state.beetleSkin)
             binding.btnStart.visibility = View.GONE
         }
     }
@@ -166,6 +168,7 @@ class GameFragment : Fragment() {
             menu.add(0, MENU_RULES, 2, R.string.tab_rules)
             menu.add(0, MENU_AUTHORS, 3, R.string.tab_authors)
             menu.add(0, MENU_SETTINGS, 4, R.string.tab_settings)
+            menu.add(0, MENU_SKINS, 5, R.string.tab_skins)
             setOnMenuItemClickListener { item ->
                 val position = when (item.itemId) {
                     MENU_PLAYERS -> MainPagerAdapter.TAB_REGISTRATION
@@ -173,6 +176,7 @@ class GameFragment : Fragment() {
                     MENU_RULES -> MainPagerAdapter.TAB_RULES
                     MENU_AUTHORS -> MainPagerAdapter.TAB_AUTHORS
                     MENU_SETTINGS -> MainPagerAdapter.TAB_SETTINGS
+                    MENU_SKINS -> MainPagerAdapter.TAB_SKINS
                     else -> return@setOnMenuItemClickListener false
                 }
                 (activity as? MainActivity)?.openTab(position)
@@ -188,5 +192,6 @@ class GameFragment : Fragment() {
         const val MENU_RULES = 3
         const val MENU_AUTHORS = 4
         const val MENU_SETTINGS = 5
+        const val MENU_SKINS = 6
     }
 }

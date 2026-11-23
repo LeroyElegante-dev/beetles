@@ -2,10 +2,12 @@ package com.example.beetles.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.beetles.data.BeetleSkinStore
 import com.example.beetles.data.CurrentPlayerStore
 import com.example.beetles.data.GameSettingsStore
 import com.example.beetles.data.GoldRateRepository
 import com.example.beetles.data.GoldRateStore
+import com.example.beetles.model.BeetleSkinSet
 import com.example.beetles.db.BeetlesDatabase
 import com.example.beetles.db.ScoreEntity
 import com.example.beetles.model.GameSettings
@@ -28,7 +30,8 @@ data class GameUiState(
     val secondsLeft: Int = 0,
     val settings: GameSettings = GameSettings.DEFAULT,
     val goldPoints: Int = 80,
-    val currentPlayerName: String? = null
+    val currentPlayerName: String? = null,
+    val beetleSkin: BeetleSkinSet = BeetleSkinSet.DEFAULT
 ) {
     val accuracyPercent: Int
         get() {
@@ -50,6 +53,7 @@ class GameViewModel(
     private val currentPlayerStore: CurrentPlayerStore,
     private val goldRateStore: GoldRateStore,
     private val goldRateRepository: GoldRateRepository,
+    private val beetleSkinStore: BeetleSkinStore,
     private val database: BeetlesDatabase
 ) : ViewModel() {
 
@@ -63,10 +67,17 @@ class GameViewModel(
 
     init {
         _state.update {
-            it.copy(secondsLeft = settingsStore.load().roundDurationSeconds)
+            it.copy(
+                secondsLeft = settingsStore.load().roundDurationSeconds,
+                beetleSkin = beetleSkinStore.selected()
+            )
         }
         refreshCurrentPlayer()
         refreshGoldRate()
+    }
+
+    fun refreshSkin() {
+        _state.update { it.copy(beetleSkin = beetleSkinStore.selected()) }
     }
 
     fun hasPlayer(): Boolean = currentPlayerStore.hasPlayer()
@@ -104,7 +115,8 @@ class GameViewModel(
             secondsLeft = settings.roundDurationSeconds,
             settings = settings,
             goldPoints = goldRateStore.pointsForHit(),
-            currentPlayerName = _state.value.currentPlayerName
+            currentPlayerName = _state.value.currentPlayerName,
+            beetleSkin = beetleSkinStore.selected()
         )
         startTimer(settings.roundDurationSeconds)
     }

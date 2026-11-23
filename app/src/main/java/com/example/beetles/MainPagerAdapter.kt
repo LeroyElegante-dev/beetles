@@ -9,6 +9,7 @@ import com.example.beetles.ui.RecordsFragment
 import com.example.beetles.ui.RegistrationFragment
 import com.example.beetles.ui.RulesFragment
 import com.example.beetles.ui.SettingsFragment
+import com.example.beetles.ui.SkinsFragment
 
 class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 
@@ -21,6 +22,7 @@ class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
         TAB_RULES -> RulesFragment()
         TAB_AUTHORS -> AuthorsFragment()
         TAB_SETTINGS -> SettingsFragment()
+        TAB_SKINS -> SkinsFragment()
         else -> error("Unknown tab: $position")
     }
 
@@ -31,6 +33,7 @@ class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
         const val TAB_RULES = 3
         const val TAB_AUTHORS = 4
         const val TAB_SETTINGS = 5
+        const val TAB_SKINS = 6
 
         val TAB_TITLES = intArrayOf(
             R.string.tab_registration,
@@ -38,7 +41,8 @@ class MainPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
             R.string.tab_records,
             R.string.tab_rules,
             R.string.tab_authors,
-            R.string.tab_settings
+            R.string.tab_settings,
+            R.string.tab_skins
         )
     }
 }

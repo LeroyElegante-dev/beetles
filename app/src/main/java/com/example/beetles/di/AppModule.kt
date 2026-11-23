@@ -1,5 +1,6 @@
 package com.example.beetles.di
 
+import com.example.beetles.data.BeetleSkinStore
 import com.example.beetles.data.CurrentPlayerStore
 import com.example.beetles.data.GameSettingsStore
 import com.example.beetles.data.GoldRateRepository
@@ -15,6 +16,7 @@ val appModule = module {
     single { CurrentPlayerStore(androidContext()) }
     single { GoldRateStore(androidContext()) }
     single { GoldRateRepository(get()) }
+    single { BeetleSkinStore(androidContext()) }
     single { BeetlesDatabase.get(androidContext()) }
 
     viewModel {
@@ -23,6 +25,7 @@ val appModule = module {
             currentPlayerStore = get(),
             goldRateStore = get(),
             goldRateRepository = get(),
+            beetleSkinStore = get(),
             database = get()
         )
     }

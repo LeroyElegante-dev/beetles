@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="96dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_model_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <com.example.beetles.game.BeetlePreviewView
+        android:id="@+id/previewModel"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@color/game_field" />
+
+    <TextView
+        android:id="@+id/tvModelName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingTop="4dp"
+        android:textAppearance="?attr/textAppearanceBodySmall"
+        tools:text="Носорог" />
+</LinearLayout>
