@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import com.example.beetles.MainActivity
+import com.example.beetles.MainPagerAdapter
 import com.example.beetles.R
 import com.example.beetles.data.GoldRateRepository
 import com.example.beetles.data.GoldRateStore
@@ -77,7 +78,12 @@ class GoldRateWidgetProvider : AppWidgetProvider() {
     }
 
     private fun openAppIntent(context: Context): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainPagerAdapter.TAB_GAME)
+        }
         return PendingIntent.getActivity(
             context,
             0,
