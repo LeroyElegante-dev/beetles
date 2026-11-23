@@ -14,6 +14,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
 import com.example.beetles.R
+import com.example.beetles.model.BeetleSkinSet
 import com.example.beetles.model.GameSettings
 import kotlin.math.cos
 import kotlin.math.sin
@@ -31,13 +32,11 @@ class GameFieldView @JvmOverloads constructor(
 
     private val insects = mutableListOf<Insect>()
     private val random = Random.Default
-    private val kindDrawables = InsectKind.entries.associateWith { kind ->
-        ContextCompat.getDrawable(context, kind.drawableRes)!!.mutate()
-    }
     private val bonusDrawable: Drawable =
         ContextCompat.getDrawable(context, R.drawable.ic_bonus)!!.mutate()
 
     private var settings = GameSettings.DEFAULT
+    private var skinSet: BeetleSkinSet = BeetleSkinSet.DEFAULT
     private var running = false
     private var lastFrameNs = 0L
     private var timeSinceSpawn = 0f
@@ -78,8 +77,18 @@ class GameFieldView @JvmOverloads constructor(
         }
     }
 
-    fun start(settings: GameSettings, goldPoints: Int = 80) {
+    fun applySkin(skinSet: BeetleSkinSet) {
+        this.skinSet = skinSet
+        invalidate()
+    }
+
+    fun start(
+        settings: GameSettings,
+        goldPoints: Int = 80,
+        skinSet: BeetleSkinSet = BeetleSkinSet.DEFAULT
+    ) {
         this.settings = settings
+        this.skinSet = skinSet
         this.goldPoints = goldPoints.coerceAtLeast(1)
         insects.clear()
         bonus = null
@@ -113,14 +122,13 @@ class GameFieldView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         insects.forEach { insect ->
-            val drawable: Drawable = kindDrawables.getValue(insect.kind)
-            drawable.setBounds(
-                insect.x.toInt(),
-                insect.y.toInt(),
-                (insect.x + insect.size).toInt(),
-                (insect.y + insect.size).toInt()
+            BeetleSkinRenderer.draw(
+                canvas,
+                insect.x,
+                insect.y,
+                insect.size,
+                skinSet.look(insect.kind)
             )
-            drawable.draw(canvas)
         }
         bonus?.let { item ->
             bonusDrawable.setBounds(
@@ -163,7 +171,6 @@ class GameFieldView @JvmOverloads constructor(
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
-        // Portrait: left edge down → insects slide left; top edge down → slide up.
         gravityX = -event.values[0]
         gravityY = event.values[1]
     }
@@ -235,8 +242,11 @@ class GameFieldView @JvmOverloads constructor(
     }
 
     private fun spawnInsect(kind: InsectKind = InsectKind.random(random)) {
-        val size = ((72 + random.nextInt(32)) * 3.5f * kind.sizeMultiplier)
-            .coerceAtMost(minOf(width, height) * 0.8f)
+        val look = skinSet.look(kind)
+        val size = BeetleSkinSet.scaledSize(
+            ((72 + random.nextInt(32)) * 3.5f * kind.sizeMultiplier),
+            look
+        ).coerceAtMost(minOf(width, height) * 0.8f)
         val maxX = (width - size).coerceAtLeast(1f)
         val maxY = (height - size).coerceAtLeast(1f)
         val angle = random.nextFloat() * (Math.PI * 2).toFloat()
